@@ -1,4 +1,5 @@
 import { internalServerErrorSchema } from '@/api/lib/constants';
+import { authMiddleware } from '@/api/middlewares/auth';
 import { createRoute, z } from '@hono/zod-openapi';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
 import { jsonContent, jsonContentRequired } from 'stoker/openapi/helpers';
@@ -22,7 +23,7 @@ export const signUp = createRoute({
 export type SignupRoute = typeof signUp;
 
 export const login = createRoute({
-  method: 'post',
+  method: 'patch',
   path: '/auth/login',
   tags: ['Auth'],
   request: {
@@ -32,7 +33,21 @@ export const login = createRoute({
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to login'),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User does not exist'),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(loginRequestSchema.body), 'Validation error'),
-    [HttpStatusCodes.CREATED]: jsonContent(z.object({ message: z.string() }), 'Successful login'),
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful login'),
   },
 });
 export type LoginRoute = typeof login;
+
+export const signout = createRoute({
+  method: 'patch',
+  path: '/auth/signout',
+  tags: ['Auth'],
+  middleware: [authMiddleware] as const,
+  request: {},
+  responses: {
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to signout'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
+    [HttpStatusCodes.NO_CONTENT]: { description: 'Successful signout' },
+  },
+});
+export type SignoutRoute = typeof signout;
