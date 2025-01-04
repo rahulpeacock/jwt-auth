@@ -1,0 +1,23 @@
+{
+  "name": "kittyo",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "pnpm run -r --parallel --aggregate-output dev",
+    "dev:api": "pnpm run --filter @kittyo/api dev",
+    "dev:web": "pnpm run --filter @kittyo/web dev",
+    "dev:api-client": "pnpm run --filter @kittyo/api-client dev",
+    "build": "pnpm run -r build",
+    "build:api-client": "pnpm run --filter @kittyo/api-client build",
+    "build:ui": "pnpm run --filter @kittyo/ui build",
+    "test": "pnpm run -r --parallel test",
+    "lint": "pnpm run -r --parallel lint",
+    "format": "pnpm run -r --parallel format",
+    "check": "pnpm run -r --parallel check",
+    "typecheck": "pnpm run -r --parallel typecheck",
+    "clean": "git clean -xdf node_modules",
+    "clean:workspace": "pnpm run -r clean"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4"
+  }
+}
