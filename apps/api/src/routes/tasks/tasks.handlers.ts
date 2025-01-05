@@ -4,15 +4,9 @@ import type { CreateTasksRoute, GetTaskRoute } from './tasks.routes';
 export const createTasks: AppRouteHandler<
   CreateTasksRoute,
   AppMiddlewareVariables<{
-    foo: string;
     bar: number;
   }>
 > = (c) => {
-  const foo = c.get('foo');
-  const bar = c.get('bar');
-
-  console.log({ foo, bar });
-
   return c.json({ created: 'created' }, 200);
 };
 

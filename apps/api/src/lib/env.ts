@@ -10,6 +10,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   SPA_ASSETS_PATH: z.string(),
   SPA_ROOT_DIR: z.string(),
+  ACCESS_TOKEN: z.string(),
+  REFRESH_TOKEN: z.string(),
   DATABASE_URL: z.string(),
 });
 

@@ -6,7 +6,7 @@ import { jsonContent, jsonContentRequired } from 'stoker/openapi/helpers';
 import { createErrorSchema } from 'stoker/openapi/schemas';
 import { loginRequestSchema, signUpRequestSchema } from './auth.schema';
 
-export const signUp = createRoute({
+export const signup = createRoute({
   method: 'post',
   path: '/auth/signup',
   tags: ['Auth'],
@@ -20,7 +20,7 @@ export const signUp = createRoute({
     [HttpStatusCodes.CREATED]: jsonContent(z.object({ message: z.string() }), 'Successful signup'),
   },
 });
-export type SignupRoute = typeof signUp;
+export type SignupRoute = typeof signup;
 
 export const login = createRoute({
   method: 'patch',
@@ -38,6 +38,11 @@ export const login = createRoute({
 });
 export type LoginRoute = typeof login;
 
+// verify-email
+// forgot-password
+// reset-password
+// update-user - metadata
+
 export const signout = createRoute({
   method: 'patch',
   path: '/auth/signout',
@@ -51,3 +56,8 @@ export const signout = createRoute({
   },
 });
 export type SignoutRoute = typeof signout;
+
+// https://demo.better-auth.com/api/auth/verify-email?
+// token=eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6InJhaHVscGFsYW1hcnRoaUBnbWFpbC5jb20iLCJpYXQiOjE3MzYwNDM0MTksImV4cCI6MTczNjA0NzAxOX0.aDvKHgCuSn-HcylMvCQrDKCplKzB98oBMue4D8fnf20
+// &
+//callbackURL=https://demo.better-auth.com/dashboard
