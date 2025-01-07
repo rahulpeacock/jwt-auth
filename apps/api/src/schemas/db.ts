@@ -6,7 +6,10 @@ export const userTable = pgTable('user', {
   emailVerified: timestamp('email_verified', { mode: 'date' }),
   metadata: json().$type<{ name: string; avatar_url: string | null }>().notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'date' }),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export const accountTable = pgTable('account', {
@@ -22,5 +25,8 @@ export const accountTable = pgTable('account', {
   idToken: text('id_token'),
   metadata: json().$type<{ password: string | null }>().notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { mode: 'date' }),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
