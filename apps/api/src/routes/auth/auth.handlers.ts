@@ -1,12 +1,13 @@
 import { env } from '@/api/lib/env';
-import type { AppRouteHandler } from '@/api/lib/types';
+import type { AppMiddlewareVariables, AppRouteHandler } from '@/api/lib/types';
 import { createJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword, verifyPassword } from '@/api/services/auth/password';
+import type { Auth } from '@/api/services/auth/types';
 import { createAccountInDB, getAccountFromDB, updateAccountInDB } from '@/api/services/db/account';
 import { createUser, getUser } from '@/api/services/db/users';
-import { setCookie } from 'hono/cookie';
+import { deleteCookie, setCookie } from 'hono/cookie';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
-import type { LoginRoute, SignupRoute } from './auth.routes';
+import type { LoginRoute, SignoutRoute, SignupRoute } from './auth.routes';
 
 export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   const { name, email, password } = c.req.valid('json');
@@ -132,4 +133,15 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
   }
 
   return c.json({ message: 'Successful login' }, HttpStatusCodes.OK);
+};
+
+export const signout: AppRouteHandler<SignoutRoute, AppMiddlewareVariables<{ auth: Auth }>> = (c) => {
+  // Delete access-token from cookie
+  deleteCookie(c, 'jwt-auth.access_token', {
+    prefix: 'secure',
+    path: '/',
+    secure: env.NODE_ENV === 'production',
+  });
+
+  return c.body(null, HttpStatusCodes.NO_CONTENT);
 };
