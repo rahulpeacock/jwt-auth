@@ -12,7 +12,7 @@ export async function createJwtToken(payload: Payload, secret: string): Promise<
 
 interface DecodedPayload extends JWTPayload, Auth {}
 
-export async function verifyJwtToken(token: string, secret: string): Promise<DecodedPayload> {
+export async function verifyJwtToken(token: string, secret: string): Promise<DecodedPayload | string> {
   const decodedPayload = await verify(token, secret, 'HS256');
   return decodedPayload as DecodedPayload;
 }
