@@ -1,6 +1,6 @@
 import { env } from '@/api/lib/env';
 import type { AppRouteHandler } from '@/api/lib/types';
-import { generateJwtToken } from '@/api/services/auth/jwt';
+import { createJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword } from '@/api/services/auth/password';
 import { createAccount } from '@/api/services/db/account';
 import { createUser, getUser } from '@/api/services/db/users';
@@ -28,7 +28,7 @@ export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   }
 
   // Generate access token
-  const accessToken = await generateJwtToken(
+  const accessToken = await createJwtToken(
     {
       user: newUser,
       exp: Math.floor(Date.now() / 1000) + 60 * 5, // Token expires in 5 minutes
@@ -37,7 +37,7 @@ export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   );
 
   // Generate a refresh token
-  const refreshToken = await generateJwtToken(
+  const refreshToken = await createJwtToken(
     {
       user: newUser,
       exp: Math.floor(Date.now() / 1000) + 60 * 10, // Token expires in 10 minutes
@@ -46,7 +46,8 @@ export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   );
 
   // Save access-token in cookie
-  setCookie(c, '__Secure-jwt-auth.access_token', accessToken, {
+  setCookie(c, 'jwt-auth.access_token', accessToken, {
+    prefix: 'secure',
     path: '/',
     secure: env.NODE_ENV === 'production',
     httpOnly: true,

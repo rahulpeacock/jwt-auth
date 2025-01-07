@@ -5,7 +5,7 @@ import type { Auth } from './types';
 
 interface Payload extends JWTPayload, Auth {}
 
-export async function generateJwtToken(payload: Payload, secret: string): Promise<string> {
+export async function createJwtToken(payload: Payload, secret: string): Promise<string> {
   const token = await sign(payload, secret, 'HS256');
   return token;
 }
