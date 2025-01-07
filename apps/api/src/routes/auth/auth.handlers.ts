@@ -81,9 +81,10 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
     return c.json({ message: 'Incorrect email or password' }, HttpStatusCodes.UNAUTHORIZED); // User does not exist
   }
 
+  // Check if email_and_password_credential account exists
   const account = await getAccountFromDB(user.id, 'email_and_password_credential');
   if (!account) {
-    return c.json({ message: 'Incorrect email or password' }, HttpStatusCodes.UNAUTHORIZED); // User does not exist
+    return c.json({ message: 'Reset password', code: 'RESET_PASSWORD' }, HttpStatusCodes.UNAUTHORIZED); // Redirect to reset-password
   }
 
   // Check if password is correct

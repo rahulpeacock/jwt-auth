@@ -31,7 +31,7 @@ export const login = createRoute({
   },
   responses: {
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to login'),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User does not exist'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string(), code: z.string().optional() }), 'User does not exist'),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(loginRequestSchema.body), 'Validation error'),
     [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful login'),
   },
