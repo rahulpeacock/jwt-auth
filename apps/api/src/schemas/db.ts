@@ -17,7 +17,7 @@ export const accountTable = pgTable('account', {
   accountId: bigint('account_id', { mode: 'number' }).notNull(),
   providerId: varchar('provider_id', { length: 255 }).notNull(),
   refreshToken: text('refresh_token'),
-  refreshTokenExpiresAt: timestamp('created_at', { mode: 'date' }),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { mode: 'date' }),
   scope: text('scope'),
   idToken: text('id_token'),
   metadata: json().$type<{ password: string | null }>().notNull(),
