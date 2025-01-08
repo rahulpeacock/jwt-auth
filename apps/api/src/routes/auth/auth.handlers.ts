@@ -1,14 +1,14 @@
 import { env } from '@/api/lib/env';
 import type { AppMiddlewareVariables, AppRouteHandler } from '@/api/lib/types';
-import { createJwtToken } from '@/api/services/auth/jwt';
+import { createJwtToken, verifyJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword, verifyPassword } from '@/api/services/auth/password';
 import type { Auth } from '@/api/services/auth/types';
 import { createVerificationToken, sendVerificationEmailToUser } from '@/api/services/auth/verification';
 import { createAccountInDB, getAccountFromDB, updateAccountInDB } from '@/api/services/db/account';
-import { createUser, getUserByEmail, getUserByUserId } from '@/api/services/db/users';
+import { createUser, getUserByEmail, getUserByUserId, updateUserById } from '@/api/services/db/users';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
-import type { LoginRoute, SendVerificationEmailRoute, SignoutRoute, SignupRoute } from './auth.routes';
+import type { LoginRoute, SendVerificationEmailRoute, SignoutRoute, SignupRoute, VerifyEmailRoute } from './auth.routes';
 
 export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   const { name, email, password } = c.req.valid('json');
@@ -129,6 +129,38 @@ export const sendVerificationEmail: AppRouteHandler<SendVerificationEmailRoute, 
   await sendVerificationEmailToUser(user.email, verificationToken);
 
   return c.json({ message: 'Verification email sent' }, HttpStatusCodes.OK);
+};
+
+export const verifyEmail: AppRouteHandler<VerifyEmailRoute, AppMiddlewareVariables<{ auth: Auth }>> = async (c) => {
+  const auth = c.get('auth');
+  const { userId, token } = c.req.valid('json');
+
+  if (auth.user.id !== userId) {
+    return c.json({ message: 'Permission denied' }, HttpStatusCodes.FORBIDDEN);
+  }
+
+  try {
+    const { payload } = await verifyJwtToken<{ email: string }>(token, env.VERIFICATION_TOKEN);
+    if (payload.email !== auth.user.email) {
+      return c.json({ message: 'Permission denied' }, HttpStatusCodes.FORBIDDEN);
+    }
+
+    const user = await getUserByUserId(userId);
+    if (!user) {
+      return c.json({ message: 'User unauthorized' }, HttpStatusCodes.UNAUTHORIZED);
+    }
+
+    if (user.emailVerified) {
+      return c.json({ message: 'User verified' }, HttpStatusCodes.OK);
+    }
+
+    await updateUserById(userId, { emailVerified: new Date() });
+
+    return c.json({ message: 'User verified' }, HttpStatusCodes.OK);
+  } catch (err) {
+    // TODO:
+    return c.json({ message: 'User unauthorized' }, HttpStatusCodes.UNAUTHORIZED);
+  }
 };
 
 export const signout: AppRouteHandler<SignoutRoute, AppMiddlewareVariables<{ auth: Auth }>> = (c) => {

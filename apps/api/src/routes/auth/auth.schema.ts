@@ -22,14 +22,9 @@ export const sendVerificationEmailRequestSchema = {
 };
 
 export const verifyEmailRequestSchema = {
-  params: z.object({
-    id: z.string().openapi({
-      param: {
-        name: 'token',
-        in: 'path',
-      },
-      example: 'access_token',
-    }),
+  body: z.object({
+    userId: z.number(),
+    token: z.string(),
   }),
 };
 

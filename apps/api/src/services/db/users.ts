@@ -1,6 +1,6 @@
 import { db } from '@/api/lib/drizzle';
 import { userTable } from '@/api/schemas/db';
-import type { NewUser } from '@/api/schemas/types';
+import type { NewUser, User } from '@/api/schemas/types';
 import { eq } from 'drizzle-orm';
 
 export async function createUser(payload: NewUser) {
@@ -17,6 +17,12 @@ export async function getUserByEmail(email: string) {
 
 export async function getUserByUserId(userId: number) {
   const res = await db.select().from(userTable).where(eq(userTable.id, userId)).limit(1);
+  if (res.length === 0) return null;
+  return res[0];
+}
+
+export async function updateUserById(userId: number, payload: Partial<User>) {
+  const res = await db.update(userTable).set(payload).where(eq(userTable.id, userId)).returning();
   if (res.length === 0) return null;
   return res[0];
 }

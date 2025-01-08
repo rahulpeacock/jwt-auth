@@ -12,6 +12,7 @@ const envSchema = z.object({
   SPA_ROOT_DIR: z.string(),
   ACCESS_TOKEN: z.string(),
   REFRESH_TOKEN: z.string(),
+  VERIFICATION_TOKEN: z.string(),
   DATABASE_URL: z.string(),
 });
 

@@ -69,11 +69,12 @@ export const verifyEmail = createRoute({
   tags: ['Auth'],
   middleware: [authMiddleware] as const,
   request: {
-    params: verifyEmailRequestSchema.params,
+    body: jsonContentRequired(verifyEmailRequestSchema.body, 'Verify email'),
   },
   responses: {
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to verify email'),
-    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(verifyEmailRequestSchema.params), 'Validation error'),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(verifyEmailRequestSchema.body), 'Validation error'),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(z.object({ message: z.string() }), 'Permission denied'),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
     [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful email verification'),
   },
