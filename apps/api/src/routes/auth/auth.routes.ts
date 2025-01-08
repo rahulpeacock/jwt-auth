@@ -4,7 +4,13 @@ import { createRoute, z } from '@hono/zod-openapi';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
 import { jsonContent, jsonContentRequired } from 'stoker/openapi/helpers';
 import { createErrorSchema } from 'stoker/openapi/schemas';
-import { loginRequestSchema, signUpRequestSchema } from './auth.schema';
+import {
+  forgotPasswordRequestSchema,
+  loginRequestSchema,
+  resetPasswordRequestSchema,
+  signUpRequestSchema,
+  verifyEmailRequestSchema,
+} from './auth.schema';
 
 export const signup = createRoute({
   method: 'post',
@@ -38,10 +44,68 @@ export const login = createRoute({
 });
 export type LoginRoute = typeof login;
 
-// verify-email
-// forgot-password
-// reset-password
-// update-user - metadata
+export const sendVerificationEmail = createRoute({
+  method: 'post',
+  path: '/auth/send-verification-email',
+  tags: ['Auth'],
+  middleware: [authMiddleware] as const,
+  request: {},
+  responses: {
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to send verification email'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Verification email sent'),
+  },
+});
+export type SendVerificationEmailRoute = typeof sendVerificationEmail;
+
+export const verifyEmail = createRoute({
+  method: 'post',
+  path: '/auth/verify-email',
+  tags: ['Auth'],
+  middleware: [authMiddleware] as const,
+  request: {
+    params: verifyEmailRequestSchema.params,
+  },
+  responses: {
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to verify email'),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(verifyEmailRequestSchema.params), 'Validation error'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful email verification'),
+  },
+});
+export type VerifyEmailRoute = typeof verifyEmail;
+
+export const forgotPassword = createRoute({
+  method: 'post',
+  path: '/auth/forgot-password',
+  tags: ['Auth'],
+  request: {
+    body: jsonContentRequired(forgotPasswordRequestSchema.body, 'Forgot password'),
+  },
+  responses: {
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to forgot password'),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(forgotPasswordRequestSchema.body), 'Validation error'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful forgot password'),
+  },
+});
+
+export const resetPassword = createRoute({
+  method: 'post',
+  path: '/auth/reset-password',
+  tags: ['Auth'],
+  request: {
+    body: jsonContentRequired(resetPasswordRequestSchema.body, 'Reset password'),
+  },
+  responses: {
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to forgot password'),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(resetPasswordRequestSchema.body), 'Validation error'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful forgot password'),
+  },
+});
+
+// update-user - metadata, password
 
 export const signout = createRoute({
   method: 'patch',
