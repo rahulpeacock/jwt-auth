@@ -13,8 +13,8 @@ export const authMiddleware = createMiddleware<{ Variables: { auth: Auth } }>(as
   }
 
   try {
-    const decodedPayload = await verifyJwtToken(accessToken, env.ACCESS_TOKEN);
-    c.set('auth', decodedPayload);
+    const { payload } = await verifyJwtToken<{ user: Auth['user'] }>(accessToken, env.ACCESS_TOKEN);
+    c.set('auth', { user: payload.user });
     return next();
   } catch (err) {
     return c.json({ message: 'User unauthorized', code: 'LOGIN' }, HttpStatusCodes.UNAUTHORIZED);

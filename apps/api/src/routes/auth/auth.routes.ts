@@ -8,6 +8,7 @@ import {
   forgotPasswordRequestSchema,
   loginRequestSchema,
   resetPasswordRequestSchema,
+  sendVerificationEmailRequestSchema,
   signUpRequestSchema,
   verifyEmailRequestSchema,
 } from './auth.schema';
@@ -49,9 +50,13 @@ export const sendVerificationEmail = createRoute({
   path: '/auth/send-verification-email',
   tags: ['Auth'],
   middleware: [authMiddleware] as const,
-  request: {},
+  request: {
+    body: jsonContentRequired(sendVerificationEmailRequestSchema.body, 'Send verification request'),
+  },
   responses: {
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to send verification email'),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(sendVerificationEmailRequestSchema.body), 'Validation error'),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(z.object({ message: z.string() }), 'Permission denied'),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
     [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Verification email sent'),
   },
@@ -89,6 +94,7 @@ export const forgotPassword = createRoute({
     [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful forgot password'),
   },
 });
+export type ForgotPasswordRoute = typeof forgotPassword;
 
 export const resetPassword = createRoute({
   method: 'post',
@@ -104,6 +110,7 @@ export const resetPassword = createRoute({
     [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful forgot password'),
   },
 });
+export type ResetPasswordRoute = typeof resetPassword;
 
 // update-user - metadata, password
 

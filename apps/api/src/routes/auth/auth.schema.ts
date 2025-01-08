@@ -15,6 +15,12 @@ export const loginRequestSchema = {
   }),
 };
 
+export const sendVerificationEmailRequestSchema = {
+  body: z.object({
+    userId: z.number(),
+  }),
+};
+
 export const verifyEmailRequestSchema = {
   params: z.object({
     id: z.string().openapi({

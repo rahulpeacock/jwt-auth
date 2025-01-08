@@ -2,6 +2,10 @@ import { createRouter } from '@/api/lib/create-router';
 import * as handlers from './auth.handlers';
 import * as routes from './auth.routes';
 
-const router = createRouter().openapi(routes.signup, handlers.signup).openapi(routes.login, handlers.login).openapi(routes.signout, handlers.signout);
+const router = createRouter()
+  .openapi(routes.signup, handlers.signup)
+  .openapi(routes.login, handlers.login)
+  .openapi(routes.signout, handlers.signout)
+  .openapi(routes.sendVerificationEmail, handlers.sendVerificationEmail);
 
 export default router;

@@ -3,17 +3,18 @@ import type { AppMiddlewareVariables, AppRouteHandler } from '@/api/lib/types';
 import { createJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword, verifyPassword } from '@/api/services/auth/password';
 import type { Auth } from '@/api/services/auth/types';
+import { createVerificationToken, sendVerificationEmailToUser } from '@/api/services/auth/verification';
 import { createAccountInDB, getAccountFromDB, updateAccountInDB } from '@/api/services/db/account';
-import { createUser, getUser } from '@/api/services/db/users';
+import { createUser, getUserByEmail, getUserByUserId } from '@/api/services/db/users';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
-import type { LoginRoute, SignoutRoute, SignupRoute } from './auth.routes';
+import type { LoginRoute, SendVerificationEmailRoute, SignoutRoute, SignupRoute } from './auth.routes';
 
 export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   const { name, email, password } = c.req.valid('json');
 
   // Check if user already exists
-  const user = await getUser(email);
+  const user = await getUserByEmail(email);
   if (user) {
     return c.json({ message: 'Incorrect email' }, HttpStatusCodes.CONFLICT); // User already exists
   }
@@ -65,7 +66,7 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
   const { email, password } = c.req.valid('json');
 
   // Check if user exists
-  const user = await getUser(email);
+  const user = await getUserByEmail(email);
   if (!user) {
     return c.json({ message: 'Incorrect email or password' }, HttpStatusCodes.UNAUTHORIZED); // User does not exist
   }
@@ -109,6 +110,25 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
   }
 
   return c.json({ message: 'Successful login' }, HttpStatusCodes.OK);
+};
+
+export const sendVerificationEmail: AppRouteHandler<SendVerificationEmailRoute, AppMiddlewareVariables<{ auth: Auth }>> = async (c) => {
+  const { userId } = c.req.valid('json');
+  const auth = c.get('auth');
+
+  if (auth.user.id !== userId) {
+    return c.json({ message: 'Permission denied' }, HttpStatusCodes.FORBIDDEN);
+  }
+
+  const user = await getUserByUserId(userId);
+  if (!user) {
+    return c.json({ message: 'User unauthorized' }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  const verificationToken = await createVerificationToken(user.email);
+  await sendVerificationEmailToUser(user.email, verificationToken);
+
+  return c.json({ message: 'Verification email sent' }, HttpStatusCodes.OK);
 };
 
 export const signout: AppRouteHandler<SignoutRoute, AppMiddlewareVariables<{ auth: Auth }>> = (c) => {

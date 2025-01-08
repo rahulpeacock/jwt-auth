@@ -9,8 +9,14 @@ export async function createUser(payload: NewUser) {
   return res[0];
 }
 
-export async function getUser(email: string) {
+export async function getUserByEmail(email: string) {
   const res = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
+  if (res.length === 0) return null;
+  return res[0];
+}
+
+export async function getUserByUserId(userId: number) {
+  const res = await db.select().from(userTable).where(eq(userTable.id, userId)).limit(1);
   if (res.length === 0) return null;
   return res[0];
 }
