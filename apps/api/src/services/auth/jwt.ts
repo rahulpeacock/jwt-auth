@@ -1,23 +1,24 @@
-import { decode, sign, verify } from 'hono/jwt';
-import type { TokenHeader } from 'hono/utils/jwt/jwt';
-import type { JWTPayload } from 'hono/utils/jwt/types';
-import type { Auth } from './types';
+import { type JWTVerifyResult, SignJWT, jwtVerify } from 'jose';
 
-interface Payload extends JWTPayload, Auth {}
+const alg = 'HS256';
+const _secret = (val: string) => new TextEncoder().encode(val);
 
-export async function createJwtToken(payload: Payload, secret: string): Promise<string> {
-  const token = await sign(payload, secret, 'HS256');
-  return token;
+export async function createJwtToken<T>(payload: T, expirationTime: string, secret: string): Promise<string> {
+  const jwtToken = await new SignJWT({ 'urn:example:claim': true, payload })
+    .setProtectedHeader({ alg })
+    .setIssuedAt()
+    .setIssuer('urn:example:issuer')
+    .setAudience('urn:example:audience')
+    .setExpirationTime(expirationTime)
+    .sign(_secret(secret));
+
+  return jwtToken;
 }
 
-interface DecodedPayload extends JWTPayload, Auth {}
-
-export async function verifyJwtToken(token: string, secret: string): Promise<DecodedPayload> {
-  const decodedPayload = await verify(token, secret, 'HS256');
-  return decodedPayload as DecodedPayload;
-}
-
-export function decodeJwtToken(token: string): { header: TokenHeader; payload: DecodedPayload } {
-  const data = decode(token);
-  return { header: data.header, payload: data.payload as DecodedPayload };
+export async function verifyJwtToken<T>(token: string, secret: string): Promise<JWTVerifyResult<T>> {
+  const decodedToken = await jwtVerify<T>(token, _secret(secret), {
+    issuer: 'urn:example:issuer',
+    audience: 'urn:example:audience',
+  });
+  return decodedToken;
 }

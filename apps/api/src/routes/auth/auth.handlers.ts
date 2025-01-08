@@ -29,22 +29,10 @@ export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   }
 
   // Generate access token
-  const accessToken = await createJwtToken(
-    {
-      user: newUser,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // Token expires in 7 days
-    },
-    env.ACCESS_TOKEN,
-  );
+  const accessToken = await createJwtToken<{ user: Auth['user'] }>({ user: newUser }, '7days', env.ACCESS_TOKEN);
 
   // Generate a refresh token
-  const refreshToken = await createJwtToken(
-    {
-      user: newUser,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 14, // Token expires in 14 days
-    },
-    env.REFRESH_TOKEN,
-  );
+  const refreshToken = await createJwtToken<{ user: Auth['user'] }>({ user: newUser }, '14days', env.REFRESH_TOKEN);
 
   // Save access-token in cookie
   setCookie(c, 'jwt-auth.access_token', accessToken, {
@@ -95,22 +83,10 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
   }
 
   // Generate access token
-  const accessToken = await createJwtToken(
-    {
-      user: user,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // Token expires in 7 days
-    },
-    env.ACCESS_TOKEN,
-  );
+  const accessToken = await createJwtToken<{ user: Auth['user'] }>({ user }, '7days', env.ACCESS_TOKEN);
 
   // Generate a refresh token
-  const refreshToken = await createJwtToken(
-    {
-      user: user,
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 14, // Token expires in 14 days
-    },
-    env.REFRESH_TOKEN,
-  );
+  const refreshToken = await createJwtToken<{ user: Auth['user'] }>({ user }, '14days', env.REFRESH_TOKEN);
 
   // Save access-token in cookie
   setCookie(c, 'jwt-auth.access_token', accessToken, {
