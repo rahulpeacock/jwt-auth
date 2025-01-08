@@ -12,7 +12,6 @@ export const createTasks = createRoute({
     createMiddleware<{
       Variables: { bar: number };
     }>((c, next) => {
-      console.log('bar middleware');
       c.set('bar', 321);
       return next();
     }),
