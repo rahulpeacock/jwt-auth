@@ -4,7 +4,7 @@ import { sendVerificationEmailToUser } from '@/api/services/auth/email-verificat
 import { createJwtToken, verifyJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword, verifyPasswordHash } from '@/api/services/auth/password';
 import type { Auth } from '@/api/services/auth/types';
-import { createVerificationToken } from '@/api/services/auth/verification';
+import { createVerificationToken } from '@/api/services/auth/utils';
 import { createAccountInDB, getAccountFromDB, updateAccountInDB } from '@/api/services/db/account';
 import { createUser, getUserByEmail, getUserByUserId, updateUserById } from '@/api/services/db/users';
 import { deleteCookie, setCookie } from 'hono/cookie';
