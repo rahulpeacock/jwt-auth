@@ -1,9 +1,10 @@
 import { env } from '@/api/lib/env';
 import type { AppMiddlewareVariables, AppRouteHandler } from '@/api/lib/types';
+import { sendVerificationEmailToUser } from '@/api/services/auth/email-verification';
 import { createJwtToken, verifyJwtToken } from '@/api/services/auth/jwt';
-import { hashPassword, verifyPassword } from '@/api/services/auth/password';
+import { hashPassword, verifyPasswordHash } from '@/api/services/auth/password';
 import type { Auth } from '@/api/services/auth/types';
-import { createVerificationToken, sendVerificationEmailToUser } from '@/api/services/auth/verification';
+import { createVerificationToken } from '@/api/services/auth/verification';
 import { createAccountInDB, getAccountFromDB, updateAccountInDB } from '@/api/services/db/account';
 import { createUser, getUserByEmail, getUserByUserId, updateUserById } from '@/api/services/db/users';
 import { deleteCookie, setCookie } from 'hono/cookie';
@@ -12,6 +13,7 @@ import type { LoginRoute, SendVerificationEmailRoute, SignoutRoute, SignupRoute,
 
 export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   const { name, email, password } = c.req.valid('json');
+  console.log('Password hash: ', await hashPassword(password));
 
   // Check if user already exists
   const user = await getUserByEmail(email);
@@ -78,7 +80,7 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
   }
 
   // Check if password is correct
-  const isPasswordCorrect = await verifyPassword(account.metadata.password as string, password);
+  const isPasswordCorrect = await verifyPasswordHash(account.metadata.password as string, password);
   if (!isPasswordCorrect) {
     return c.json({ message: 'Incorrect email or password' }, HttpStatusCodes.UNAUTHORIZED); // Password is incorrect
   }
