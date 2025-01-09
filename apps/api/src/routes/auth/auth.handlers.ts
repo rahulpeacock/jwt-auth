@@ -1,15 +1,16 @@
 import { env } from '@/api/lib/env';
 import type { AppMiddlewareVariables, AppRouteHandler } from '@/api/lib/types';
-import { sendVerificationEmailToUser } from '@/api/services/auth/email-verification';
+import { sendForgotPasswordEmail, sendVerificationEmailToUser } from '@/api/services/auth/email-verification';
 import { createJwtToken, verifyJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword, verifyPasswordHash } from '@/api/services/auth/password';
 import type { Auth } from '@/api/services/auth/types';
-import { createVerificationToken } from '@/api/services/auth/utils';
+import { createVerificationToken, generateForgotPasswordToken } from '@/api/services/auth/utils';
 import { createAccountInDB, getAccountFromDB, updateAccountInDB } from '@/api/services/db/account';
 import { createUser, getUserByEmail, getUserByUserId, updateUserById } from '@/api/services/db/users';
+import { createVerificationTokenInDB } from '@/api/services/db/verification-token';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
-import type { LoginRoute, SendVerificationEmailRoute, SignoutRoute, SignupRoute, VerifyEmailRoute } from './auth.routes';
+import type { ForgotPasswordRoute, LoginRoute, SendVerificationEmailRoute, SignoutRoute, SignupRoute, VerifyEmailRoute } from './auth.routes';
 
 export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   const { name, email, password } = c.req.valid('json');
@@ -165,6 +166,26 @@ export const verifyEmail: AppRouteHandler<VerifyEmailRoute, AppMiddlewareVariabl
     logger.error(err, 'VERIFY_EMAIL: verification token jwt error');
     return c.json({ message: 'User unauthorized' }, HttpStatusCodes.UNAUTHORIZED);
   }
+};
+
+export const forgotPassword: AppRouteHandler<ForgotPasswordRoute> = async (c) => {
+  const { email } = c.req.valid('json');
+
+  const user = await getUserByEmail(email);
+  if (!user) {
+    return c.json({ message: 'Incorrect email' }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  const token = generateForgotPasswordToken();
+  await createVerificationTokenInDB({
+    identifier: user.email,
+    token,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+  });
+
+  await sendForgotPasswordEmail(email, token);
+
+  return c.json({ message: 'Reset password email sent' }, HttpStatusCodes.OK);
 };
 
 export const signout: AppRouteHandler<SignoutRoute, AppMiddlewareVariables<{ auth: Auth }>> = (c) => {

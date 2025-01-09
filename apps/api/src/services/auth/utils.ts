@@ -1,5 +1,5 @@
 import { env } from '@/api/lib/env';
-import { encodeBase32UpperCaseNoPadding } from '@oslojs/encoding';
+import { encodeBase32LowerCaseNoPadding, encodeBase32UpperCaseNoPadding } from '@oslojs/encoding';
 import { createJwtToken } from './jwt';
 
 export async function createVerificationToken(email: string): Promise<string> {
@@ -12,4 +12,11 @@ export function generateRandomOTP(): string {
   crypto.getRandomValues(bytes);
   const code = encodeBase32UpperCaseNoPadding(bytes);
   return code;
+}
+
+export function generateForgotPasswordToken(): string {
+  const tokenBytes = new Uint8Array(20);
+  crypto.getRandomValues(tokenBytes);
+  const token = encodeBase32LowerCaseNoPadding(tokenBytes).toLowerCase();
+  return token;
 }

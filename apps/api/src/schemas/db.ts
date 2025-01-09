@@ -30,3 +30,15 @@ export const accountTable = pgTable('account', {
     .notNull()
     .$onUpdate(() => new Date()),
 });
+
+export const verificationTokenTable = pgTable('verification_token', {
+  id: serial('id').primaryKey(),
+  identifier: varchar('identifier', { length: 255 }).notNull(),
+  token: varchar('token', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  expiresAt: timestamp('expires_at', { mode: 'date' }).notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+});
