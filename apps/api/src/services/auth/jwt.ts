@@ -4,7 +4,7 @@ const alg = 'HS256';
 const _secret = (val: string) => new TextEncoder().encode(val);
 
 export async function createJwtToken<T>(payload: T, expirationTime: string, secret: string): Promise<string> {
-  const jwtToken = await new SignJWT({ 'urn:example:claim': true, payload })
+  const jwtToken = await new SignJWT({ 'urn:example:claim': true, ...payload })
     .setProtectedHeader({ alg })
     .setIssuedAt()
     .setIssuer('urn:example:issuer')
