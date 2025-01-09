@@ -159,6 +159,8 @@ export const verifyEmail: AppRouteHandler<VerifyEmailRoute, AppMiddlewareVariabl
     return c.json({ message: 'User verified' }, HttpStatusCodes.OK);
   } catch (err) {
     // TODO:
+    const logger = c.get('logger');
+    logger.error(err, 'VERIFY_EMAIL: verification token jwt error');
     return c.json({ message: 'User unauthorized' }, HttpStatusCodes.UNAUTHORIZED);
   }
 };
