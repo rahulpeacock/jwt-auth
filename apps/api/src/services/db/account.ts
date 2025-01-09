@@ -9,6 +9,19 @@ export async function createAccountInDB(payload: NewAccount) {
   return res[0];
 }
 
+export async function upsertAccountInDB(payload: NewAccount) {
+  const res = await db
+    .insert(accountTable)
+    .values(payload)
+    .onConflictDoUpdate({
+      target: accountTable.userId,
+      set: { metadata: { password: payload.metadata.password } },
+    })
+    .returning();
+  if (res.length === 0) return null;
+  return res[0];
+}
+
 export async function getAccountFromDB(userId: number, provider: string) {
   const res = await db
     .select()

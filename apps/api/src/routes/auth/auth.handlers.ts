@@ -5,12 +5,20 @@ import { createJwtToken, verifyJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword, verifyPasswordHash } from '@/api/services/auth/password';
 import type { Auth } from '@/api/services/auth/types';
 import { createVerificationToken, generateForgotPasswordToken } from '@/api/services/auth/utils';
-import { createAccountInDB, getAccountFromDB, updateAccountInDB } from '@/api/services/db/account';
+import { createAccountInDB, getAccountFromDB, updateAccountInDB, upsertAccountInDB } from '@/api/services/db/account';
 import { createUser, getUserByEmail, getUserByUserId, updateUserById } from '@/api/services/db/users';
-import { createVerificationTokenInDB } from '@/api/services/db/verification-token';
+import { createVerificationTokenInDB, getVerificationTokenFromDB } from '@/api/services/db/verification-token';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
-import type { ForgotPasswordRoute, LoginRoute, SendVerificationEmailRoute, SignoutRoute, SignupRoute, VerifyEmailRoute } from './auth.routes';
+import type {
+  ForgotPasswordRoute,
+  LoginRoute,
+  ResetPasswordRoute,
+  SendVerificationEmailRoute,
+  SignoutRoute,
+  SignupRoute,
+  VerifyEmailRoute,
+} from './auth.routes';
 
 export const signup: AppRouteHandler<SignupRoute> = async (c) => {
   const { name, email, password } = c.req.valid('json');
@@ -186,6 +194,32 @@ export const forgotPassword: AppRouteHandler<ForgotPasswordRoute> = async (c) =>
   await sendForgotPasswordEmail(email, token);
 
   return c.json({ message: 'Reset password email sent' }, HttpStatusCodes.OK);
+};
+
+export const resetPassword: AppRouteHandler<ResetPasswordRoute> = async (c) => {
+  const { token, password } = c.req.valid('json');
+
+  const verificationToken = await getVerificationTokenFromDB(token);
+
+  if (!verificationToken) {
+    return c.json({ message: 'Incorrect token' }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  const user = await getUserByEmail(verificationToken.identifier);
+  if (!user) {
+    return c.json({ message: 'Incorrect token' }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  await upsertAccountInDB({
+    userId: user.id,
+    accountId: user.id,
+    providerId: 'email_and_password_credential',
+    refreshToken: null,
+    refreshTokenExpiresAt: null,
+    metadata: { password: await hashPassword(password) },
+  });
+
+  return c.json({ message: 'Password reset successful' }, HttpStatusCodes.OK);
 };
 
 export const signout: AppRouteHandler<SignoutRoute, AppMiddlewareVariables<{ auth: Auth }>> = (c) => {
