@@ -40,3 +40,11 @@ export const resetPasswordRequestSchema = {
     token: z.string(),
   }),
 };
+
+export const updateUserRequestSchema = {
+  body: z.object({
+    name: z.string(),
+    avatar_url: z.string().url(),
+    password: z.string().min(8),
+  }),
+};

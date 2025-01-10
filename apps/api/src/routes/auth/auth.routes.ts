@@ -10,6 +10,7 @@ import {
   resetPasswordRequestSchema,
   sendVerificationEmailRequestSchema,
   signUpRequestSchema,
+  updateUserRequestSchema,
   verifyEmailRequestSchema,
 } from './auth.schema';
 
@@ -114,6 +115,21 @@ export const resetPassword = createRoute({
 export type ResetPasswordRoute = typeof resetPassword;
 
 // update-user - metadata, password
+export const updateUser = createRoute({
+  method: 'patch',
+  path: '/auth/update-user',
+  tags: ['Auth'],
+  middleware: [authMiddleware] as const,
+  request: {
+    body: jsonContentRequired(updateUserRequestSchema.body, 'Update user'),
+  },
+  responses: {
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to update user'),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(resetPasswordRequestSchema.body), 'Validation error'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful update user'),
+  },
+});
 
 export const signout = createRoute({
   method: 'patch',
