@@ -36,15 +36,21 @@ export const forgotPasswordRequestSchema = {
 
 export const resetPasswordRequestSchema = {
   body: z.object({
-    password: z.string(),
+    password: z.string().min(8),
     token: z.string(),
   }),
 };
 
 export const updateUserRequestSchema = {
   body: z.object({
-    name: z.string(),
-    avatar_url: z.string().url(),
-    password: z.string().min(8),
+    userId: z.number(),
+    metadata: z
+      .object({
+        name: z.string(),
+        avatar_url: z.string().url(),
+      })
+      .partial()
+      .optional(),
+    password: z.string().min(8).optional(),
   }),
 };

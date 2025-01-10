@@ -114,7 +114,6 @@ export const resetPassword = createRoute({
 });
 export type ResetPasswordRoute = typeof resetPassword;
 
-// update-user - metadata, password
 export const updateUser = createRoute({
   method: 'patch',
   path: '/auth/update-user',
@@ -126,10 +125,12 @@ export const updateUser = createRoute({
   responses: {
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to update user'),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(resetPasswordRequestSchema.body), 'Validation error'),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(z.object({ message: z.string() }), 'Permission denied'),
     [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
     [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful update user'),
   },
 });
+export type UpdateUserRoute = typeof updateUser;
 
 export const signout = createRoute({
   method: 'patch',

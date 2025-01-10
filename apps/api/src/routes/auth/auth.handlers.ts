@@ -5,7 +5,7 @@ import { createJwtToken, verifyJwtToken } from '@/api/services/auth/jwt';
 import { hashPassword, verifyPasswordHash } from '@/api/services/auth/password';
 import type { Auth } from '@/api/services/auth/types';
 import { createVerificationToken, generateForgotPasswordToken } from '@/api/services/auth/utils';
-import { createAccountInDB, getAccountFromDB, updateAccountInDB, upsertAccountInDB } from '@/api/services/db/account';
+import { createAccountInDB, getAccountFromDB, updateAccountByProviderInDB, updateAccountInDB, upsertAccountInDB } from '@/api/services/db/account';
 import { createUser, getUserByEmail, getUserByUserId, updateUserById } from '@/api/services/db/users';
 import { createVerificationTokenInDB, getVerificationTokenFromDB } from '@/api/services/db/verification-token';
 import { deleteCookie, setCookie } from 'hono/cookie';
@@ -17,6 +17,7 @@ import type {
   SendVerificationEmailRoute,
   SignoutRoute,
   SignupRoute,
+  UpdateUserRoute,
   VerifyEmailRoute,
 } from './auth.routes';
 
@@ -111,7 +112,7 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
   });
 
   // Update refresh-token in db
-  const updatedAccount = await updateAccountInDB({
+  const updatedAccount = await updateAccountByProviderInDB(user.id, 'email_and_password_credential', {
     refreshToken,
     refreshTokenExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
   });
@@ -220,6 +221,53 @@ export const resetPassword: AppRouteHandler<ResetPasswordRoute> = async (c) => {
   });
 
   return c.json({ message: 'Password reset successful' }, HttpStatusCodes.OK);
+};
+
+export const updateUser: AppRouteHandler<UpdateUserRoute, AppMiddlewareVariables<{ auth: Auth }>> = async (c) => {
+  const { userId, metadata, password } = c.req.valid('json');
+  const auth = c.get('auth');
+
+  if (auth.user.id !== userId) {
+    return c.json({ message: 'Permission denied' }, HttpStatusCodes.FORBIDDEN);
+  }
+
+  const user = await getUserByUserId(userId);
+  if (!user) {
+    return c.json({ message: 'Incorrect token' }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  if (metadata) {
+    const newUser = await updateUserById(user.id, { metadata: { ...user.metadata, ...metadata } });
+    if (!newUser) {
+      return c.json({ message: 'Failed to update user' }, HttpStatusCodes.INTERNAL_SERVER_ERROR);
+    }
+
+    const accessToken = await createJwtToken<{ user: Auth['user'] }>({ user: newUser }, '7days', env.ACCESS_TOKEN);
+    setCookie(c, 'jwt-auth.access_token', accessToken, {
+      prefix: 'secure',
+      path: '/',
+      secure: env.NODE_ENV === 'production',
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7), // Token expires in 7 days
+      sameSite: 'Lax',
+    });
+
+    const refreshToken = await createJwtToken<{ user: Auth['user'] }>({ user: newUser }, '14days', env.REFRESH_TOKEN);
+    updateAccountInDB(user.id, { refreshToken, refreshTokenExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14) });
+  }
+
+  if (password) {
+    await upsertAccountInDB({
+      userId: user.id,
+      accountId: user.id,
+      providerId: 'email_and_password_credential',
+      refreshToken: null,
+      refreshTokenExpiresAt: null,
+      metadata: { password: await hashPassword(password) },
+    });
+  }
+
+  return c.json({ message: 'User updated successfully' }, HttpStatusCodes.OK);
 };
 
 export const signout: AppRouteHandler<SignoutRoute, AppMiddlewareVariables<{ auth: Auth }>> = (c) => {

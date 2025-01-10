@@ -9,19 +9,6 @@ export async function createAccountInDB(payload: NewAccount) {
   return res[0];
 }
 
-export async function upsertAccountInDB(payload: NewAccount) {
-  const res = await db
-    .insert(accountTable)
-    .values(payload)
-    .onConflictDoUpdate({
-      target: accountTable.userId,
-      set: { metadata: { password: payload.metadata.password } },
-    })
-    .returning();
-  if (res.length === 0) return null;
-  return res[0];
-}
-
 export async function getAccountFromDB(userId: number, provider: string) {
   const res = await db
     .select()
@@ -31,8 +18,31 @@ export async function getAccountFromDB(userId: number, provider: string) {
   return res[0];
 }
 
-export async function updateAccountInDB(payload: Partial<Account>) {
-  const res = await db.update(accountTable).set(payload).returning();
+export async function updateAccountInDB(userId: number, payload: Partial<Account>) {
+  const res = await db.update(accountTable).set(payload).where(eq(accountTable.userId, userId)).returning();
+  if (res.length === 0) return null;
+  return res[0];
+}
+
+export async function updateAccountByProviderInDB(userId: number, providerId: string, payload: Partial<Account>) {
+  const res = await db
+    .update(accountTable)
+    .set(payload)
+    .where(and(eq(accountTable.userId, userId), eq(accountTable.providerId, providerId)))
+    .returning();
+  if (res.length === 0) return null;
+  return res[0];
+}
+
+export async function upsertAccountInDB(payload: NewAccount) {
+  const res = await db
+    .insert(accountTable)
+    .values(payload)
+    .onConflictDoUpdate({
+      target: [accountTable.userId, accountTable.providerId],
+      set: { metadata: { password: payload.metadata.password } },
+    })
+    .returning();
   if (res.length === 0) return null;
   return res[0];
 }
