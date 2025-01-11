@@ -7,7 +7,7 @@ import type { Auth } from '@/api/services/auth/types';
 import { createVerificationToken, generateForgotPasswordToken } from '@/api/services/auth/utils';
 import { createAccountInDB, getAccountFromDB, updateAccountByProviderInDB, updateAccountInDB, upsertAccountInDB } from '@/api/services/db/account';
 import { createUser, getUserByEmail, getUserByUserId, updateUserById } from '@/api/services/db/users';
-import { createVerificationTokenInDB, getVerificationTokenFromDB } from '@/api/services/db/verification-token';
+import { getVerificationTokenFromDB, upsertVerificationTokenInDB } from '@/api/services/db/verification-token';
 import { deleteCookie, setCookie } from 'hono/cookie';
 import * as HttpStatusCodes from 'stoker/http-status-codes';
 import type {
@@ -186,10 +186,10 @@ export const forgotPassword: AppRouteHandler<ForgotPasswordRoute> = async (c) =>
   }
 
   const token = generateForgotPasswordToken();
-  await createVerificationTokenInDB({
+  await upsertVerificationTokenInDB({
     identifier: user.email,
     token,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60),
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60), // token expires in 1 hour
   });
 
   await sendForgotPasswordEmail(email, token);
@@ -201,7 +201,6 @@ export const resetPassword: AppRouteHandler<ResetPasswordRoute> = async (c) => {
   const { token, password } = c.req.valid('json');
 
   const verificationToken = await getVerificationTokenFromDB(token);
-
   if (!verificationToken) {
     return c.json({ message: 'Incorrect token' }, HttpStatusCodes.UNAUTHORIZED);
   }

@@ -2,6 +2,7 @@ import { db } from '@/api/lib/drizzle';
 import { userTable } from '@/api/schemas/db';
 import type { NewUser, User } from '@/api/schemas/types';
 import { eq } from 'drizzle-orm';
+import { lower } from './utils';
 
 export async function createUser(payload: NewUser) {
   const res = await db.insert(userTable).values(payload).returning();
@@ -10,7 +11,11 @@ export async function createUser(payload: NewUser) {
 }
 
 export async function getUserByEmail(email: string) {
-  const res = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
+  const res = await db
+    .select()
+    .from(userTable)
+    .where(eq(lower(userTable.email), email))
+    .limit(1);
   if (res.length === 0) return null;
   return res[0];
 }

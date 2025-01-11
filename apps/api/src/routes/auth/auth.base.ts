@@ -7,6 +7,7 @@ const router = createRouter()
   .openapi(routes.login, handlers.login)
   .openapi(routes.sendVerificationEmail, handlers.sendVerificationEmail)
   .openapi(routes.verifyEmail, handlers.verifyEmail)
+  .openapi(routes.forgotPassword, handlers.forgotPassword)
   .openapi(routes.signout, handlers.signout);
 
 export default router;
