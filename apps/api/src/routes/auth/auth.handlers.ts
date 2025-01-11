@@ -185,12 +185,15 @@ export const forgotPassword: AppRouteHandler<ForgotPasswordRoute> = async (c) =>
     return c.json({ message: 'Incorrect email' }, HttpStatusCodes.UNAUTHORIZED);
   }
 
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
+  console.log('Expires At: ', expiresAt);
   const token = generateForgotPasswordToken();
-  await upsertVerificationTokenInDB({
+  const val = await upsertVerificationTokenInDB({
     identifier: user.email,
     token,
-    expiresAt: new Date(Date.now() + 1000 * 60 * 60), // token expires in 1 hour
+    expiresAt: expiresAt, // token expires in 1 hour
   });
+  console.log('Val: ', val);
 
   await sendForgotPasswordEmail(email, token);
 
@@ -205,17 +208,31 @@ export const resetPassword: AppRouteHandler<ResetPasswordRoute> = async (c) => {
     return c.json({ message: 'Incorrect token' }, HttpStatusCodes.UNAUTHORIZED);
   }
 
+  const isTokenExpired = new Date() > verificationToken.expiresAt;
+  if (isTokenExpired) {
+    return c.json({ message: 'Token expired', code: 'TOKEN_EXPIRED' }, HttpStatusCodes.UNAUTHORIZED);
+  }
+
   const user = await getUserByEmail(verificationToken.identifier);
   if (!user) {
     return c.json({ message: 'Incorrect token' }, HttpStatusCodes.UNAUTHORIZED);
   }
 
-  await upsertAccountInDB({
-    userId: user.id,
-    accountId: user.id,
-    providerId: 'email_and_password_credential',
-    refreshToken: null,
-    refreshTokenExpiresAt: null,
+  const account = await getAccountFromDB(user.id, 'email_and_password_credential');
+  if (!account) {
+    await createAccountInDB({
+      userId: user.id,
+      accountId: user.id,
+      providerId: 'email_and_password_credential',
+      refreshToken: null,
+      refreshTokenExpiresAt: null,
+      metadata: { password: await hashPassword(password) },
+    });
+
+    return c.json({ message: 'Password reset successful' }, HttpStatusCodes.OK);
+  }
+
+  await updateAccountInDB(account.userId, {
     metadata: { password: await hashPassword(password) },
   });
 

@@ -108,7 +108,7 @@ export const resetPassword = createRoute({
   responses: {
     [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(internalServerErrorSchema, 'Failed to forgot password'),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(createErrorSchema(resetPasswordRequestSchema.body), 'Validation error'),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string() }), 'User unauthorized'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(z.object({ message: z.string(), code: z.string().optional() }), 'User unauthorized'),
     [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), 'Successful forgot password'),
   },
 });
